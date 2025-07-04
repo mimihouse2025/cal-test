@@ -59,7 +59,7 @@
   </div>
 
   <div class="checkbox-group">
-    <label>ご自身の車椅子を使用する場合は↓下記チェックを入れてください</label><br>
+    <label>ご自身の車椅子を使用</label><br>
     <label><input type="checkbox" id="ownWheelchair"> 使用する</label>
   </div>
   <div class="radio-group">
@@ -83,7 +83,8 @@
     <div class="invoice-block">
       <div class="invoice-title">福祉タクシー利用料（請求書）</div>
       <div class="invoice-header">
-        <div>宛名：__________________________*/
+        <div>宛名：__________________________</div>
+        <div>発行日：________年____月____日</div>
       </div>
       <div>車種：<span id="invoiceVehicle"></span></div>
       <table class="invoice-table" id="invoice-table"></table>
@@ -91,7 +92,8 @@
     <div class="invoice-block">
       <div class="invoice-title">福祉タクシー利用料（領収書）</div>
       <div class="invoice-header">
-        <div>宛名：__________________________*/
+        <div>宛名：__________________________</div>
+        <div>発行日：________年____月____日</div>
       </div>
       <div>車種：<span id="invoiceVehicleCopy"></span></div>
       <table class="invoice-table" id="invoice-table-copy"></table>
@@ -120,7 +122,8 @@
 
       const wheelchairSelected = document.querySelector('input[name="wheelchair"]:checked').value === 'yes';
       const stretcherSelected = document.querySelector('input[name="stretcher"]:checked').value === 'yes';
-      if (vehicleType === '軽自動車' && (wheelchairSelected || stretcherSelected)) {
+      const ownWheelchair = document.getElementById('ownWheelchair').checked;
+      if (vehicleType === '軽自動車' && (wheelchairSelected || stretcherSelected || ownWheelchair)) {
         alert('車椅子またはストレッチャーをご希望される際はワンボックス型を選んでください。');
         return;
       }
@@ -172,37 +175,4 @@
           breakdown.push(`階段昇降介助：¥1600`);
         }
 
-        if (document.getElementById('ownWheelchair').checked) {
-          breakdown.push('ご自身の車椅子使用する場合');
-        }
-
-        if (stretcherSelected) {
-          fare += 4000; breakdown.push('ストレッチャー：¥4000');
-        }
-        if (wheelchairSelected) {
-          breakdown.push('車椅子貸出：¥0');
-        }
-
-        document.getElementById('result').textContent = `合計運賃：¥${fare.toLocaleString()}（${isNight ? '深夜' : '通常'}）`;
-        document.getElementById('details').textContent = `走行距離：${distanceKm.toFixed(2)} km`;
-        document.getElementById('breakdown').innerHTML = `<ul><li>車種：${vehicleType}</li>` + breakdown.map(i => `<li>${i}</li>`).join('') + `</ul>`;
-      });
-    }
-
-    function generatePDF() {
-      const breakdownEl = document.getElementById('breakdown');
-      if (!breakdownEl.innerHTML) { alert('先に計算してください'); return; }
-      document.getElementById('invoiceVehicle').textContent = document.getElementById('vehicleType').value;
-      document.getElementById('invoiceVehicleCopy').textContent = document.getElementById('vehicleType').value;
-      const items = Array.from(breakdownEl.querySelectorAll('li')).map(li => `<tr><td>${li.textContent}</td></tr>`).join('');
-      const extra = `<tr><td><strong>合計運賃：</strong>${document.getElementById('result').textContent}</td></tr>` +
-                    `<tr><td><strong>走行距離：</strong>${distanceKmGlobal.toFixed(2)} km</td></tr>`;
-      const tableHTML = `<tr><th>明細</th></tr>${items}${extra}`;
-      document.getElementById('invoice-table').innerHTML = tableHTML;
-      document.getElementById('invoice-table-copy').innerHTML = tableHTML;
-      const inv = document.getElementById('invoice'); inv.style.display = 'block';
-      html2pdf().from(inv).set({ margin: 10, filename: '請求書.pdf', jsPDF: { unit: 'mm', format: 'a4' } }).save().then(() => inv.style.display = 'none');
-    }
-  </script>
-</body>
-</html>
+        if (ownWheelchair) {\...
