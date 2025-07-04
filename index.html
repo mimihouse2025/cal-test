@@ -132,7 +132,7 @@
       }
 
       const nurse      = parseInt(document.getElementById('nurseAssistants').value, 10) || 0;
-      const helper     = parseInt(document.getElementById('helperAssistAssistants').value, 10) || 0;      
+      const helper     = parseInt(document.getElementById('helperAssistants').value, 10) || 0;      
       const assistTime = parseFloat(document.getElementById('assistantHours').value) || 0;
       if ((nurse + helper) > 0 && assistTime === 0) {
         alert('付添スタッフをご希望の場合は必ず時間を入力してください。');
