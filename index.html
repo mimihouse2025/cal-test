@@ -13,7 +13,7 @@
     #result, #breakdown { margin-top: 20px; font-weight: bold; }
     #breakdown ul { padding-left: 20px; }
     #invoice { font-size: 14px; display: none; }
-    .invoice-block { border: 1px solid #000; padding: 10px; margin-bottom: 20px; }
+    .invoice-block { border: 1px solid #000; padding: 10px; margin-bottom: 20px; background: #fff; }
     .invoice-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
     .invoice-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px; }
     .invoice-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -110,7 +110,9 @@
     });
 
     function calculateFare() {
+      // デバッグ確認
       alert('calculateFare が呼ばれました');
+      
       if (typeof google === 'undefined' || !google.maps || !google.maps.DirectionsService) {
         alert('Google Maps API が読み込まれていません');
         return;
@@ -188,18 +190,12 @@
 
     function generatePDF() {
       const invoice = document.getElementById('invoice');
+      // PDF 要素を表示
       invoice.style.display = 'block';
-      // PDF オプション（必要に応じて設定）
-      const opt = {
-        margin:       0.5,
-        filename:     '福祉タクシー請求書.pdf',
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-      };
-
+      
+      // 請求書・領収書の内容を更新
       document.getElementById('invoiceVehicle').textContent     = document.getElementById('vehicleType').value;
       document.getElementById('invoiceVehicleCopy').textContent = document.getElementById('vehicleType').value;
-
       const table = document.getElementById('invoice-table');
       table.innerHTML = '';
       document.querySelectorAll('#breakdown li').forEach(li => {
@@ -210,10 +206,21 @@
       });
       document.getElementById('invoice-table-copy').innerHTML = table.innerHTML;
 
-      // PDF 生成・保存後に非表示
-      html2pdf().set(opt).from(invoice).save().then(() => {
-        invoice.style.display = 'none';
-      });
+      // PDF オプション
+      const opt = {
+        margin:       0.5,
+        filename:     '福祉タクシー請求書.pdf',
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+
+      // 少しだけ待ってから PDF 生成
+      setTimeout(() => {
+        // シンプル API 呼び出し
+        html2pdf(invoice, opt);
+        // PDF 生成後に非表示（タイミングによっては別途ハンドリング要）
+        setTimeout(() => { invoice.style.display = 'none'; }, 1000);
+      }, 200);
     }
   </script>
 </body>
