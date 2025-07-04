@@ -203,6 +203,21 @@
     }
 
     function generatePDF() {
+	    
+	   
+-     if (typeof html2pdf === 'undefined') { alert('html2pdf.js が読み込まれていません'); return; }
++     alert('generatePDF が呼ばれました');            
++     console.log('▶ generatePDF 開始');              
+
+      if (typeof html2pdf === 'undefined') {
+        alert('html2pdf.js が読み込まれていません');
+        return;
+      }
+     
+	    
+	    
+	    
+	    
       if (typeof html2pdf === 'undefined') {
         alert('html2pdf.js が読み込まれていません');
         return;
