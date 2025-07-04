@@ -12,16 +12,16 @@
     .radio-group label, .checkbox-group label { font-weight: normal; margin-left: 20px; display: inline-block; }
     #result, #breakdown { margin-top: 20px; font-weight: bold; }
     #breakdown ul { padding-left: 20px; }
-    #invoice { font-size: 14px; page-break-inside: avoid; display: none; }
+    #invoice { font-size: 14px; display: none; }
     .invoice-block { border: 1px solid #000; padding: 10px; margin-bottom: 20px; }
     .invoice-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
     .invoice-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px; }
     .invoice-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     .invoice-table th, .invoice-table td { border: 1px solid #000; padding: 4px; text-align: left; }
   </style>
-  <!-- Google Maps API: local testing may require proper referrer restrictions or serving over HTTP -->
+  <!-- Google Maps API -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1Y1geobXRlk517MSj_b3dEl9o1wZjKSs&libraries=places"></script>
-  <!-- html2pdf.js for PDF output -->
+  <!-- html2pdf.js -->
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
@@ -104,16 +104,13 @@
   </div>
 
   <script>
-    // DOM が読み込まれたらイベントをセット
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('calcBtn').addEventListener('click', calculateFare);
       document.getElementById('pdfBtn').addEventListener('click', generatePDF);
     });
 
     function calculateFare() {
-      // デバッグ用アラート
       alert('calculateFare が呼ばれました');
-      // Maps API 読み込みチェック
       if (typeof google === 'undefined' || !google.maps || !google.maps.DirectionsService) {
         alert('Google Maps API が読み込まれていません');
         return;
@@ -192,9 +189,16 @@
     function generatePDF() {
       const invoice = document.getElementById('invoice');
       invoice.style.display = 'block';
-      const vehicle = document.getElementById('vehicleType').value;
-      document.getElementById('invoiceVehicle').textContent     = vehicle;
-      document.getElementById('invoiceVehicleCopy').textContent = vehicle;
+      // PDF オプション（必要に応じて設定）
+      const opt = {
+        margin:       0.5,
+        filename:     '福祉タクシー請求書.pdf',
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+
+      document.getElementById('invoiceVehicle').textContent     = document.getElementById('vehicleType').value;
+      document.getElementById('invoiceVehicleCopy').textContent = document.getElementById('vehicleType').value;
 
       const table = document.getElementById('invoice-table');
       table.innerHTML = '';
@@ -206,8 +210,10 @@
       });
       document.getElementById('invoice-table-copy').innerHTML = table.innerHTML;
 
-      html2pdf().from(invoice).save();
-      invoice.style.display = 'none';
+      // PDF 生成・保存後に非表示
+      html2pdf().set(opt).from(invoice).save().then(() => {
+        invoice.style.display = 'none';
+      });
     }
   </script>
 </body>
