@@ -1,44 +1,33 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>福祉タクシー利用料</title>
   <style>
     body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     input, select, button { width: 100%; padding: 8px; margin: 10px 0; box-sizing: border-box; }
     label { display: block; margin-top: 10px; font-weight: bold; }
-    .radio-group, .checkbox-group { margin-bottom: 15px; }
-    .radio-group label, .checkbox-group label { font-weight: normal; margin-left: 20px; display: inline-block; }
-    #result, #breakdown { margin-top: 20px; font-weight: bold; }
+    .radio-group { margin-bottom: 15px; }
+    .radio-group label { font-weight: normal; margin-left: 20px; display: inline-block; }
+    #result, #details, #breakdown { margin-top: 20px; font-weight: bold; }
     #breakdown ul { padding-left: 20px; }
-
-    #invoice {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      background: #fff;
-      padding: 20px;
-      font-size: 14px;
-      z-index: 9999;
-    }
-
+    #invoice { font-size: 14px; page-break-inside: avoid; }
     .invoice-block { border: 1px solid #000; padding: 10px; margin-bottom: 20px; }
     .invoice-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
     .invoice-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px; }
     .invoice-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     .invoice-table th, .invoice-table td { border: 1px solid #000; padding: 4px; text-align: left; }
   </style>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1Y1geobXRlk517MSj_b3dEl9o1wZjKSs&libraries=places" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
 </head>
 <body>
-  <h3>福祉タクシー 利用料計算：</h3>
+  <h3>福祉タクシー 利用料計算</h3>
   <input id="origin" type="text" placeholder="出発地" />
   <input id="destination" type="text" placeholder="目的地" />
-  <label>出発予定時刻：<input type="time" id="rideTime" value="10:00" /></label>
-
-  <label>ご希望車種：
+  <label>出発予定時刻：<input type="time" id="rideTime" value="10:00"></label>
+  <label>ご希望車種：＊軽自動車には車椅子は乗せられません。
     <select id="vehicleType">
       <option value="軽自動車">軽自動車</option>
       <option value="大型ワンボックス">ワンボックス型</option>
@@ -46,15 +35,13 @@
   </label>
 
   <div class="radio-group">
-    <label>乗降介助:</label>
+    <label>乗降介助:</label><br>
     <label><input type="radio" name="boardingAssist" value="yes" checked> あり</label>
     <label><input type="radio" name="boardingAssist" value="no"> なし</label>
   </div>
-
   <label>室内移動付乗降介助（人数）<input id="indoorAssistants" type="number" min="0" value="0"></label>
   <label>看護師付き添い（人数）<input id="nurseAssistants" type="number" min="0" value="0"></label>
   <label>ヘルパー付き添い（人数）<input id="helperAssistants" type="number" min="0" value="0"></label>
-
   <label>付き添い時間（30分単位）
     <select id="assistantHours">
       <option value="0">0分</option>
@@ -66,36 +53,28 @@
   </label>
 
   <div class="radio-group">
-    <label>階段昇降介助:</label>
+    <label>階段昇降介助:</label><br>
     <label><input type="radio" name="stairsSupport" value="yes"> あり</label>
     <label><input type="radio" name="stairsSupport" value="no" checked> なし</label>
   </div>
-
-  <!-- ✅ ラジオボタンに変更済み -->
   <div class="radio-group">
-    <label>ご自身の車椅子を使用:</label>
-    <label><input type="radio" name="ownWheelchair" value="yes"> あり</label>
-    <label><input type="radio" name="ownWheelchair" value="no" checked> なし</label>
-  </div>
-
-  <div class="radio-group">
-    <label>貸し出し車椅子:</label>
+    <label>貸し出し車椅子（1台まで無料）:</label><br>
     <label><input type="radio" name="wheelchair" value="yes"> 使用する</label>
     <label><input type="radio" name="wheelchair" value="no" checked> 使用しない</label>
   </div>
-
   <div class="radio-group">
-    <label>ストレッチャー使用:</label>
+    <label>ストレッチャー使用:</label><br>
     <label><input type="radio" name="stretcher" value="yes"> 使用する</label>
     <label><input type="radio" name="stretcher" value="no" checked> 使用しない</label>
   </div>
 
   <button id="calcBtn">運賃を計算する</button>
   <div id="result"></div>
+  <div id="details"></div>
   <div id="breakdown"></div>
   <button id="pdfBtn">PDFを出力する</button>
 
-  <div id="invoice">
+  <div id="invoice" style="display:none;">
     <div class="invoice-block">
       <div class="invoice-title">福祉タクシー利用料（請求書）</div>
       <div class="invoice-header">
@@ -105,7 +84,6 @@
       <div>車種：<span id="invoiceVehicle"></span></div>
       <table class="invoice-table" id="invoice-table"></table>
     </div>
-
     <div class="invoice-block">
       <div class="invoice-title">福祉タクシー利用料（領収書）</div>
       <div class="invoice-header">
@@ -117,128 +95,102 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1Y1geobXRlk517MSj_b3dEl9o1wZjKSs&libraries=places"></script>
-
   <script>
-    document.getElementById("calcBtn").addEventListener("click", calculateFare);
-    document.getElementById("pdfBtn").addEventListener("click", generatePDF);
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('calcBtn').addEventListener('click', calculateFare);
+      document.getElementById('pdfBtn').addEventListener('click', generatePDF);
+    });
 
-    function calculateFare(callback) {
-      if (!google || !google.maps) {
-        alert("Google Maps API が読み込まれていません（API キーを確認）");
+    let distanceKmGlobal = 0;
+
+    function calculateFare() {
+      const origin = document.getElementById('origin').value.trim();
+      const destination = document.getElementById('destination').value.trim();
+      if (!origin || !destination) {
+        alert('出発地と目的地を入力してください。');
+        return;
+      }
+      const rideTime = document.getElementById('rideTime').value;
+      const hour = Number(rideTime.split(':')[0]);
+      const isNight = hour >= 22 || hour < 5;
+      const vehicleType = document.getElementById('vehicleType').value;
+
+      // 付添スタッフ・時間チェック
+      const nurse = parseInt(document.getElementById('nurseAssistants').value, 10) || 0;
+      const helper = parseInt(document.getElementById('helperAssistants').value, 10) || 0;
+      const assistTime = parseFloat(document.getElementById('assistantHours').value) || 0;
+      if ((nurse + helper) > 0 && assistTime === 0) {
+        alert('付添スタッフをご希望の場合は必ず時間を入力してください。');
         return;
       }
 
-      const o = document.getElementById("origin").value.trim();
-      const d = document.getElementById("destination").value.trim();
-      if (!o || !d) { alert("出発地と目的地を入力してください。"); return; }
+      const service = new google.maps.DirectionsService();
+      service.route({ origin, destination, travelMode: google.maps.DirectionsTravelMode.DRIVING }, (res, status) => {
+        if (status !== 'OK') { alert('ルート取得失敗：' + status); return; }
+        const leg = res.routes[0].legs[0];
+        const distanceKm = leg.distance.value / 1000;
+        distanceKmGlobal = distanceKm;
 
-      const hr   = +document.getElementById("rideTime").value.split(":")[0];
-      const night= hr >= 22 || hr < 5;
-      const vt   = document.getElementById("vehicleType").value;
-
-      const ownWC = document.querySelector("input[name='ownWheelchair']:checked").value === "yes";
-      const lendWC= document.querySelector("input[name='wheelchair']:checked").value === "yes";
-      const str   = document.querySelector("input[name='stretcher']:checked").value  === "yes";
-      if (vt === "軽自動車" && (ownWC || lendWC || str)) {
-        alert("軽自動車では車椅子／ストレッチャーは使用できません");
-        return;
-      }
-
-      const nu = +document.getElementById("nurseAssistants").value  || 0;
-      const hp = +document.getElementById("helperAssistants").value || 0;
-      const at = +document.getElementById("assistantHours").value   || 0;
-      if (nu + hp > 0 && at === 0) {
-        alert("付添いを希望する場合は必ず時間を入力してください（30分単位）");
-        return;
-      }
-
-      new google.maps.DirectionsService().route({
-        origin: o,
-        destination: d,
-        travelMode: google.maps.DirectionsTravelMode.DRIVING
-      }, (res, st) => {
-        if (st !== "OK") { alert("ルート取得失敗: " + st); return; }
-
-        const km = res.routes[0].legs[0].distance.value / 1000;
         let fare = 341;
-        const bd = [`距離基本運賃：¥341`];
-
-        if (km > 1) {
-          const ex = Math.ceil(km - 1) * 330;
-          fare += ex; bd.push(`追加距離：¥${ex}`);
+        const breakdown = [];
+        breakdown.push(`距離基本運賃：¥341`);
+        if (distanceKm > 1) {
+          const extra = Math.ceil(distanceKm - 1) * 330;
+          fare += extra;
+          breakdown.push(`追加距離：¥${extra}`);
         }
-        if (night) {
-          fare = Math.round(fare * 1.2);
-          bd.push("深夜割増：×1.2");
+        if (isNight) { fare = Math.round(fare * 1.2); breakdown.push('深夜割増：×1.2'); }
+        fare += 400; breakdown.push('予約料：¥400');
+
+        if (document.querySelector('input[name="boardingAssist"]:checked').value === 'yes') {
+          fare += 1100; breakdown.push('乗降介助：¥1100');
         }
+        const indoor = parseInt(document.getElementById('indoorAssistants').value, 10) || 0;
+        fare += indoor * 1100; breakdown.push(`室内移動：¥${indoor * 1100}`);
 
-        fare += 400; bd.push("予約料：¥400");
-
-        if (document.querySelector("input[name='boardingAssist']:checked").value === "yes") {
-          fare += 1100; bd.push("乗降介助：¥1100");
-        }
-
-        const ind = +document.getElementById("indoorAssistants").value || 0;
-        if (ind > 0) {
-          fare += ind * 1100; bd.push(`室内移動：¥${ind * 1100}`);
-        }
-
-        if (nu + hp > 0) {
-          let unit = nu * 3000 + hp * 1250;
-          unit *= at * 2;
-          if (night) unit = Math.round(unit * 1.2);
-          fare += unit; bd.push(`付添い：¥${unit}`, `付添い時間：${at * 60}分`);
+        // 付添い費用計算
+        if (nurse + helper > 0) {
+          let unitFare = nurse * 3000 + helper * 1250;
+          let subFare = unitFare * (assistTime * 2);
+          if (isNight) subFare = Math.round(subFare * 1.2);
+          fare += subFare;
+          breakdown.push(`付添い：¥${subFare}`);
+          breakdown.push(`付添い時間：${assistTime * 60}分`);
         }
 
-        if (document.querySelector("input[name='stairsSupport']:checked").value === "yes") {
-          if (nu + hp === 0) { alert("階段介助には付添いが必須です"); return; }
-          fare += 1600; bd.push("階段昇降介助：¥1600");
+        // 階段昇降介助
+        if (document.querySelector('input[name="stairsSupport"]:checked').value === 'yes') {
+          if (nurse + helper === 0) { alert('階段昇降介助には付添スタッフが必要です。'); return; }
+          fare += 1600;
+          breakdown.push(`階段昇降介助：¥1600`);
         }
 
-        if (ownWC) bd.push("ご自身の車椅子を使用");
+        if (document.querySelector('input[name="stretcher"]:checked').value === 'yes') {
+          fare += 4000; breakdown.push('ストレッチャー：¥4000');
+        }
+        if (document.querySelector('input[name="wheelchair"]:checked').value === 'yes') {
+          breakdown.push('車椅子貸出：¥0');
+        }
 
-        document.getElementById("result").textContent = `合計運賃：¥${fare.toLocaleString()}`;
-        document.getElementById("breakdown").innerHTML = "<ul><li>" + bd.join("</li><li>") + "</li></ul>";
-
-        if (typeof callback === "function") callback();
+        document.getElementById('result').textContent = `合計運賃：¥${fare.toLocaleString()}（${isNight ? '深夜' : '通常'}）`;
+        document.getElementById('details').textContent = `走行距離：${distanceKm.toFixed(2)} km`;
+        document.getElementById('breakdown').innerHTML = `<ul><li>車種：${vehicleType}</li>` + breakdown.map(i => `<li>${i}</li>`).join('') + `</ul>`;
       });
     }
 
     function generatePDF() {
-      const invoice = document.getElementById("invoice");
-      invoice.style.display = "block";
-
-      calculateFare(() => {
-        const vt = document.getElementById("vehicleType").value;
-        document.getElementById("invoiceVehicle").textContent = vt;
-        document.getElementById("invoiceVehicleCopy").textContent = vt;
-
-        const tbl = document.getElementById("invoice-table");
-        tbl.innerHTML = "";
-        document.querySelectorAll("#breakdown li").forEach((li) => {
-          const tr = document.createElement("tr");
-          const td = document.createElement("td");
-          td.textContent = li.textContent;
-          tr.appendChild(td);
-          tbl.appendChild(tr);
-        });
-        document.getElementById("invoice-table-copy").innerHTML = tbl.innerHTML;
-
-        html2pdf().set({
-          margin: 0.5,
-          filename: "福祉タクシー請求書.pdf",
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
-        }).from(invoice).save().then(() => {
-          invoice.style.display = "none";
-        }).catch(err => {
-          console.error(err);
-          alert("PDF生成中にエラーが発生しました");
-          invoice.style.display = "none";
-        });
-      });
+      const breakdownEl = document.getElementById('breakdown');
+      if (!breakdownEl.innerHTML) { alert('先に計算してください'); return; }
+      const vehicleType = document.getElementById('vehicleType').value;
+      document.getElementById('invoiceVehicle').textContent = vehicleType;
+      document.getElementById('invoiceVehicleCopy').textContent = vehicleType;
+      const items = Array.from(breakdownEl.querySelectorAll('li')).map(li => `<tr><td>${li.textContent}</td></tr>`).join('');
+      const extra = `<tr><td><strong>合計運賃：</strong>${document.getElementById('result').textContent}</td></tr>` + `<tr><td><strong>走行距離：</strong>${distanceKmGlobal.toFixed(2)} km</td></tr>`;
+      const tableHTML = `<tr><th>明細</th></tr>${items}${extra}`;
+      document.getElementById('invoice-table').innerHTML = tableHTML;
+      document.getElementById('invoice-table-copy').innerHTML = tableHTML;
+      const inv = document.getElementById('invoice'); inv.style.display = 'block';
+      html2pdf().from(inv).set({ margin: 10, filename: '請求書.pdf', jsPDF: { unit: 'mm', format: 'a4' } }).save().then(() => inv.style.display = 'none');
     }
   </script>
 </body>
