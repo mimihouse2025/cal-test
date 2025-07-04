@@ -17,7 +17,6 @@
     .invoice-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
     .invoice-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px; }
     .invoice-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    /* 明細表の高さを小さくするためパディングを調整 */
     .invoice-table th, .invoice-table td { border: 1px solid #000; padding: 2px; line-height: 1.2; }
   </style>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1Y1geobXRlk517MSj_b3dEl9o1wZjKSs&libraries=places" defer></script>
@@ -84,7 +83,9 @@
       </div>
       <div>車種：<span id="invoiceVehicle"></span></div>
       <table class="invoice-table" id="invoice-table"></table>
+      <div style="margin-top: 10px; text-align: right;">発行元：一般社団法人NURTURES みみの家</div>
     </div>
+
     <div class="invoice-block">
       <div class="invoice-title">福祉タクシー利用料（領収書）</div>
       <div class="invoice-header">
@@ -93,6 +94,7 @@
       </div>
       <div>車種：<span id="invoiceVehicleCopy"></span></div>
       <table class="invoice-table" id="invoice-table-copy"></table>
+      <div style="margin-top: 10px; text-align: right;">発行元：一般社団法人NURTURES みみの家</div>
     </div>
   </div>
 
@@ -125,7 +127,7 @@
       }
 
       const service = new google.maps.DirectionsService();
-      service.route({ origin, destination, travelMode: google.maps.DirectionsTravelMode.DRIVING }, (res, status) => {
+      service.route({ origin, destination, travelMode: google.maps.TravelMode.DRIVING }, (res, status) => {
         if (status !== 'OK') { alert('ルート取得失敗：' + status); return; }
         const leg = res.routes[0].legs[0];
         const distanceKm = leg.distance.value / 1000;
@@ -188,7 +190,8 @@
       const tableHTML = `<tr><th>明細</th></tr>${items}${extra}`;
       document.getElementById('invoice-table').innerHTML = tableHTML;
       document.getElementById('invoice-table-copy').innerHTML = tableHTML;
-      const inv = document.getElementById('invoice'); inv.style.display = 'block';
+      const inv = document.getElementById('invoice');
+      inv.style.display = 'block';
       html2pdf().from(inv).set({ margin: 10, filename: '請求書.pdf', jsPDF: { unit: 'mm', format: 'a4' } }).save().then(() => inv.style.display = 'none');
     }
   </script>
