@@ -19,13 +19,15 @@
     .invoice-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     .invoice-table th, .invoice-table td { border: 1px solid #000; padding: 4px; text-align: left; }
   </style>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1Y1geobXRlk517MSj_b3dEl9o1wZjKSs&libraries=places" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+  <!-- Google Maps API: local testing may require proper referrer restrictions or serving over HTTP -->
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1Y1geobXRlk517MSj_b3dEl9o1wZjKSs&libraries=places"></script>
+  <!-- html2pdf.js for PDF output -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
   <h3>福祉タクシー 利用料計算：</h3>
   <p>発着地のいずれかが佐倉市であればOKです。</p>
-  <p>福祉有償運送の特性上現在のところ佐倉市を絡ませたタクシーサービスとなっています。</p>
+  <p>福祉有償運送の特性上、現在は佐倉市を絡ませたタクシーサービスです。</p>
   <input id="origin" type="text" placeholder="出発地" />
   <input id="destination" type="text" placeholder="目的地" />
   <label>出発予定時刻：<input type="time" id="rideTime" value="10:00"></label>
@@ -102,13 +104,21 @@
   </div>
 
   <script>
-    document.getElementById('calcBtn').addEventListener('click', calculateFare);
-    document.getElementById('pdfBtn').addEventListener('click', generatePDF);
-
-    let distanceKmGlobal = 0;
+    // DOM が読み込まれたらイベントをセット
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('calcBtn').addEventListener('click', calculateFare);
+      document.getElementById('pdfBtn').addEventListener('click', generatePDF);
+    });
 
     function calculateFare() {
-      console.log('calculateFare triggered');
+      // デバッグ用アラート
+      alert('calculateFare が呼ばれました');
+      // Maps API 読み込みチェック
+      if (typeof google === 'undefined' || !google.maps || !google.maps.DirectionsService) {
+        alert('Google Maps API が読み込まれていません');
+        return;
+      }
+
       const origin      = document.getElementById('origin').value.trim();
       const destination = document.getElementById('destination').value.trim();
       if (!origin || !destination) {
@@ -116,78 +126,74 @@
         return;
       }
 
-      const rideTime     = document.getElementById('rideTime').value;
-      const hour         = Number(rideTime.split(':')[0]);
-      const isNight      = hour >= 22 || hour < 5;
-      const vehicleType  = document.getElementById('vehicleType').value;
+      const rideTime    = document.getElementById('rideTime').value;
+      const hour        = Number(rideTime.split(':')[0]);
+      const isNight     = hour >= 22 || hour < 5;
+      const vehicleType = document.getElementById('vehicleType').value;
 
       const ownWheelchair     = document.getElementById('ownWheelchair').checked;
       const wheelchairLend    = document.querySelector('input[name="wheelchair"]:checked').value === 'yes';
       const stretcherSelected = document.querySelector('input[name="stretcher"]:checked').value === 'yes';
       if (vehicleType === '軽自動車' && (ownWheelchair || wheelchairLend || stretcherSelected)) {
-        alert('車椅子またはストレッチャーをご希望される際はワンボックス型を選んでください。');
+        alert('軽自動車では車椅子またはストレッチャーをご利用いただけません。ワンボックス型を選択してください。');
         return;
       }
 
-      const nurse     = parseInt(document.getElementById('nurseAssistants').value, 10) || 0;
-      const helper    = parseInt(document.getElementById('helperAssistants').value, 10) || 0;
+      const nurse      = parseInt(document.getElementById('nurseAssistants').value, 10) || 0;
+      const helper     = parseInt(document.getElementById('helperAssistants').value, 10) || 0;
       const assistTime = parseFloat(document.getElementById('assistantHours').value) || 0;
       if ((nurse + helper) > 0 && assistTime === 0) {
-        alert('付添スタッフをご希望の場合は必ず時間を入力してください。');
+        alert('付添スタッフをご希望の場合は時間を入力してください。');
         return;
       }
 
       const service = new google.maps.DirectionsService();
-      service.route(
-        { origin, destination, travelMode: google.maps.DirectionsTravelMode.DRIVING },
-        (res, status) => {
-          if (status !== 'OK') { alert('ルート取得失敗：' + status); return; }
-          const leg        = res.routes[0].legs[0];
-          const distanceKm = leg.distance.value / 1000;
-          distanceKmGlobal = distanceKm;
+      service.route({ origin, destination, travelMode: google.maps.DirectionsTravelMode.DRIVING }, (res, status) => {
+        if (status !== 'OK') { alert('ルート取得に失敗しました：' + status); return; }
+        const leg        = res.routes[0].legs[0];
+        const distanceKm = leg.distance.value / 1000;
 
-          let fare = 341;
-          const breakdown = [`距離基本運賃：¥341`];
-          if (distanceKm > 1) {
-            const extra = Math.ceil(distanceKm - 1) * 330;
-            fare += extra;
-            breakdown.push(`追加距離：¥${extra}`);
-          }
-          if (isNight) { fare = Math.round(fare * 1.2); breakdown.push('深夜割増：×1.2'); }
-          fare += 400; breakdown.push('予約料：¥400');
-          if (document.querySelector('input[name="boardingAssist"]:checked').value === 'yes') {
-            fare += 1100; breakdown.push('乗降介助：¥1100');
-          }
-          const indoor = parseInt(document.getElementById('indoorAssistants').value, 10) || 0;
-          fare += indoor * 1100; breakdown.push(`室内移動：¥${indoor * 1100}`);
-
-          if (nurse + helper > 0) {
-            let unitFare = nurse * 3000 + helper * 1250;
-            let subFare  = unitFare * (assistTime * 2);
-            if (isNight) subFare = Math.round(subFare * 1.2);
-            fare += subFare;
-            breakdown.push(`付添い：¥${subFare}`);
-            breakdown.push(`付添い時間：${assistTime * 60}分`);
-          }
-
-          if (document.querySelector('input[name="stairsSupport"]:checked').value === 'yes') {
-            if (nurse + helper === 0) { alert('階段昇降介助には付添スタッフが必要です。'); return; }
-            fare += 1600; breakdown.push('階段昇降介助：¥1600');
-          }
-
-          if (ownWheelchair) breakdown.push('ご自身の車椅子を使用');
-
-          document.getElementById('result').textContent = `合計運賃：¥${fare.toLocaleString()}`;
-          document.getElementById('breakdown').innerHTML = '<ul><li>' + breakdown.join('</li><li>') + '</li></ul>';
+        let fare = 341;
+        const breakdown = [`距離基本運賃：¥341`];
+        if (distanceKm > 1) {
+          const extra = Math.ceil(distanceKm - 1) * 330;
+          fare += extra;
+          breakdown.push(`追加距離：¥${extra}`);
         }
-      );
+        if (isNight) { fare = Math.round(fare * 1.2); breakdown.push('深夜割増：×1.2'); }
+        fare += 400; breakdown.push('予約料：¥400');
+        if (document.querySelector('input[name="boardingAssist"]:checked').value === 'yes') {
+          fare += 1100; breakdown.push('乗降介助：¥1100');
+        }
+        const indoor = parseInt(document.getElementById('indoorAssistants').value, 10) || 0;
+        fare += indoor * 1100; breakdown.push(`室内移動：¥${indoor * 1100}`);
+
+        if (nurse + helper > 0) {
+          let unitFare = nurse * 3000 + helper * 1250;
+          let subFare  = unitFare * (assistTime * 2);
+          if (isNight) subFare = Math.round(subFare * 1.2);
+          fare += subFare;
+          breakdown.push(`付添い：¥${subFare}`);
+          breakdown.push(`付添い時間：${assistTime * 60}分`);
+        }
+
+        if (document.querySelector('input[name="stairsSupport"]:checked').value === 'yes') {
+          if (nurse + helper === 0) { alert('階段昇降介助には付添スタッフが必要です。'); return; }
+          fare += 1600; breakdown.push('階段昇降介助：¥1600');
+        }
+
+        if (ownWheelchair) breakdown.push('ご自身の車椅子を使用');
+
+        document.getElementById('result').textContent   = `合計運賃：¥${fare.toLocaleString()}`;
+        document.getElementById('breakdown').innerHTML = '<ul><li>' + breakdown.join('</li><li>') + '</li></ul>';
+      });
     }
 
     function generatePDF() {
       const invoice = document.getElementById('invoice');
       invoice.style.display = 'block';
       const vehicle = document.getElementById('vehicleType').value;
-      document.getElementById('invoiceVehicle').textContent = vehicle;
+      document.getElementById('invoiceVehicle').textContent     = vehicle;
       document.getElementById('invoiceVehicleCopy').textContent = vehicle;
 
       const table = document.getElementById('invoice-table');
