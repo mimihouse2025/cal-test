@@ -8,71 +8,95 @@
     body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     input, select, button { width: 100%; padding: 8px; margin: 10px 0; box-sizing: border-box; }
     label { display: block; margin-top: 10px; font-weight: bold; }
+    .radio-group, .checkbox-group { margin-bottom: 15px; }
+    .radio-group label, .checkbox-group label { font-weight: normal; margin-left: 20px; display: inline-block; }
     #result, #breakdown { margin-top: 20px; font-weight: bold; }
     #breakdown ul { padding-left: 20px; }
-    #invoice { display: none; background: #fff; padding: 10px; }
+    #invoice { font-size: 14px; display: none; background: #fff; padding: 10px; }
     .invoice-block { border: 1px solid #000; padding: 10px; margin-bottom: 20px; }
     .invoice-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
-    .invoice-title { text-align: center; font-size: 18px; margin-bottom: 10px; }
-    .invoice-table { width: 100%; border-collapse: collapse; }
-    .invoice-table td { border: 1px solid #000; padding: 4px; }
+    .invoice-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px; }
+    .invoice-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .invoice-table th, .invoice-table td { border: 1px solid #000; padding: 4px; text-align: left; }
   </style>
-
-  <!-- Google Maps APIは後読み込みでOK -->
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1Y1geobXRlk517MSj_b3dEl9o1wZjKSs&libraries=places">
-  </script>
+  <!-- Google Maps API -->
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1Y1geobXRlk517MSj_b3dEl9o1wZjKSs&libraries=places"></script>
+  <!-- html2pdf.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
-  <h3>福祉タクシー 利用料計算</h3>
-
-  <input id="origin" placeholder="出発地" />
-  <input id="destination" placeholder="目的地" />
-  <label>時刻：<input type="time" id="rideTime" value="10:00"></label>
-  <label>車種：
+  <h3>福祉タクシー 利用料計算：</h3>
+  <p>発着地のいずれかが佐倉市であればOKです。</p>
+  <p>福祉有償運送の特性上、現在は佐倉市を絡ませたタクシーサービスです。</p>
+  <input id="origin" type="text" placeholder="出発地" />
+  <input id="destination" type="text" placeholder="目的地" />
+  <label>出発予定時刻：<input type="time" id="rideTime" value="10:00"></label>
+  <label>ご希望車種：
     <select id="vehicleType">
       <option value="軽自動車">軽自動車</option>
       <option value="大型ワンボックス">ワンボックス型</option>
     </select>
   </label>
 
-  <label>看護師（人）<input id="nurseAssistants" type="number" min="0" value="0"></label>
-  <label>ヘルパー（人）<input id="helperAssistants" type="number" min="0" value="0"></label>
-  <label>付き添い時間（h）<input id="assistantHours" type="number" step="0.5" value="0"></label>
-
-  <label>階段介助：
-    <select id="stairsSupport">
-      <option value="no" selected>なし</option>
-      <option value="yes">あり</option>
+  <div class="radio-group">
+    <label>乗降介助:</label>
+    <label><input type="radio" name="boardingAssist" value="yes" checked> あり</label>
+    <label><input type="radio" name="boardingAssist" value="no"> なし</label>
+  </div>
+  <label>室内移動付乗降介助（人数）<input id="indoorAssistants" type="number" min="0" value="0"></label>
+  <label>看護師付き添い（人数）<input id="nurseAssistants" type="number" min="0" value="0"></label>
+  <label>ヘルパー付き添い（人数）<input id="helperAssistants" type="number" min="0" value="0"></label>
+  <label>付き添い時間（30分単位）
+    <select id="assistantHours">
+      <option value="0">0分</option>
+      <option value="0.5">30分</option>
+      <option value="1">60分</option>
+      <option value="1.5">90分</option>
+      <option value="2">120分</option>
     </select>
   </label>
 
-  <label>車椅子持込：<input id="ownWheelchair" type="checkbox"></label>
+  <div class="radio-group">
+    <label>階段昇降介助:</label>
+    <label><input type="radio" name="stairsSupport" value="yes"> あり</label>
+    <label><input type="radio" name="stairsSupport" value="no" checked> なし</label>
+  </div>
 
-  <!-- ★ type="button" ＆ onclick指定で必ず反応 ★ -->
-  <button type="button" id="calcBtn" onclick="calculateFare()">運賃を計算する</button>
+  <div class="checkbox-group">
+    <label>ご自身の車椅子を使用</label>
+    <label><input type="checkbox" id="ownWheelchair"> 使用する</label>
+  </div>
+  <div class="radio-group">
+    <label>貸し出し車椅子（1台まで無料）:</label>
+    <label><input type="radio" name="wheelchair" value="yes"> 使用する</label>
+    <label><input type="radio" name="wheelchair" value="no" checked> 使用しない</label>
+  </div>
+  <div class="radio-group">
+    <label>ストレッチャー使用:</label>
+    <label><input type="radio" name="stretcher" value="yes"> 使用する</label>
+    <label><input type="radio" name="stretcher" value="no" checked> 使用しない</label>
+  </div>
+
+  <button id="calcBtn">運賃を計算する</button>
   <div id="result"></div>
   <div id="breakdown"></div>
+  <button id="pdfBtn">PDFを出力する</button>
 
-  <button type="button" id="pdfBtn" onclick="generatePDF()">PDFを出力する</button>
-
-  <!-- PDF出力用 -->
   <div id="invoice">
     <div class="invoice-block">
-      <div class="invoice-title">請求書</div>
+      <div class="invoice-title">福祉タクシー利用料（請求書）</div>
       <div class="invoice-header">
-        <div>宛名：________</div>
-        <div>発行日：____年__月__日</div>
+        <div>宛名：__________________________</div>
+        <div>発行日：________年____月____日</div>
       </div>
       <div>車種：<span id="invoiceVehicle"></span></div>
       <table class="invoice-table" id="invoice-table"></table>
     </div>
     <div class="invoice-block">
-      <div class="invoice-title">領収書</div>
+      <div class="invoice-title">福祉タクシー利用料（領収書）</div>
       <div class="invoice-header">
-        <div>宛名：________</div>
-        <div>発行日：____年__月__日</div>
+        <div>宛名：__________________________</div>
+        <div>発行日：________年____月____日</div>
       </div>
       <div>車種：<span id="invoiceVehicleCopy"></span></div>
       <table class="invoice-table" id="invoice-table-copy"></table>
@@ -80,51 +104,123 @@
   </div>
 
   <script>
-    function calculateFare() {
-      // ボタンが反応するか確認するダミー
-      console.log('calculateFare invoked');
-      alert('計算処理を開始します');
+    document.getElementById('calcBtn').addEventListener('click', calculateFare);
+    document.getElementById('pdfBtn').addEventListener('click', generatePDF);
 
-      // 入力チェック
-      const o = document.getElementById('origin').value.trim();
-      const d = document.getElementById('destination').value.trim();
-      if (!o || !d) {
-        return alert('出発地と目的地を入力してください');
+    function calculateFare(callback) {
+      // 計算開始の確認
+      console.log('calculateFare が呼ばれました');
+      if (typeof google === 'undefined' || !google.maps || !google.maps.DirectionsService) {
+        alert('Google Maps API が読み込まれていません');
+        return;
+      }
+      const origin      = document.getElementById('origin').value.trim();
+      const destination = document.getElementById('destination').value.trim();
+      if (!origin || !destination) {
+        alert('出発地と目的地を入力してください。');
+        return;
+      }
+      const rideTime    = document.getElementById('rideTime').value;
+      const hour        = Number(rideTime.split(':')[0]);
+      const isNight     = hour >= 22 || hour < 5;
+      const vehicleType = document.getElementById('vehicleType').value;
+      const ownWheelchair = document.getElementById('ownWheelchair').checked;
+      const wheelchairLend = document.querySelector('input[name="wheelchair"]:checked').value === 'yes';
+      const stretcherSelected = document.querySelector('input[name="stretcher"]:checked').value === 'yes';
+      if (vehicleType === '軽自動車' && (ownWheelchair || wheelchairLend || stretcherSelected)) {
+        alert('軽自動車では車椅子またはストレッチャーをご利用いただけません。ワンボックス型を選択してください。');
+        return;
+      }
+      const nurse   = parseInt(document.getElementById('nurseAssistants').value, 10) || 0;
+      const helper  = parseInt(document.getElementById('helperAssistants').value, 10) || 0;
+      const assistTime = parseFloat(document.getElementById('assistantHours').value) || 0;
+      if ((nurse + helper) > 0 && assistTime === 0) {
+        alert('付添スタッフをご希望の場合は時間を入力してください。');
+        return;
       }
 
-      // 以下、元の計算ロジックをそのままコピーしてください
-      // （Google Maps API が使えない場合は距離を固定値にして動作確認してもOKです）
-      // …
-      document.getElementById('result').textContent = '合計：¥XXX';
-      document.getElementById('breakdown').innerHTML = '<ul><li>ダミー内訳</li></ul>';
+      const service = new google.maps.DirectionsService();
+      service.route({ origin, destination, travelMode: google.maps.DirectionsTravelMode.DRIVING },
+        (res, status) => {
+          if (status !== 'OK') { alert('ルート取得に失敗しました：' + status); return; }
+          const leg        = res.routes[0].legs[0];
+          const distanceKm = leg.distance.value / 1000;
+          let fare = 341;
+          const breakdown = [`距離基本運賃：¥341`];
+          if (distanceKm > 1) {
+            const extra = Math.ceil(distanceKm - 1) * 330;
+            fare += extra;
+            breakdown.push(`追加距離：¥${extra}`);
+          }
+          if (isNight) { fare = Math.round(fare * 1.2); breakdown.push('深夜割増：×1.2'); }
+          fare += 400; breakdown.push('予約料：¥400');
+          if (document.querySelector('input[name="boardingAssist"]:checked').value === 'yes') {
+            fare += 1100; breakdown.push('乗降介助：¥1100');
+          }
+          const indoor = parseInt(document.getElementById('indoorAssistants').value, 10) || 0;
+          fare += indoor * 1100; breakdown.push(`室内移動：¥${indoor * 1100}`);
+          if (nurse + helper > 0) {
+            let unitFare = nurse * 3000 + helper * 1250;
+            let subFare = unitFare * (assistTime * 2);
+            if (isNight) subFare = Math.round(subFare * 1.2);
+            fare += subFare;
+            breakdown.push(`付添い：¥${subFare}`);
+            breakdown.push(`付添い時間：${assistTime * 60}分`);
+          }
+          if (document.querySelector('input[name="stairsSupport"]:checked').value === 'yes') {
+            if (nurse + helper === 0) { alert('階段昇降介助には付添スタッフが必要です。'); return; }
+            fare += 1600; breakdown.push('階段昇降介助：¥1600');
+          }
+          if (ownWheelchair) breakdown.push('ご自身の車椅子を使用');
+
+          document.getElementById('result').textContent = `合計運賃：¥${fare.toLocaleString()}`;
+          document.getElementById('breakdown').innerHTML = '<ul><li>' + breakdown.join('</li><li>') + '</li></ul>';
+
+          if (typeof callback === 'function') callback();
+        }
+      );
     }
 
     function generatePDF() {
-      alert('PDF出力処理を開始します');
-      const inv = document.getElementById('invoice');
-      inv.style.display = 'block';
+      // 1) 計算を確実に実行してから
+      calculateFare(() => {
+        // 2) 請求書要素を表示し、中身を埋める
+        const invoice = document.getElementById('invoice');
+        invoice.style.display = 'block';
+        document.getElementById('invoiceVehicle').textContent     = document.getElementById('vehicleType').value;
+        document.getElementById('invoiceVehicleCopy').textContent = document.getElementById('vehicleType').value;
 
-      // 内訳をコピー
-      const items = document.querySelectorAll('#breakdown li');
-      const tbl  = document.getElementById('invoice-table');
-      const tbc  = document.getElementById('invoice-table-copy');
-      tbl.innerHTML = tbc.innerHTML = '';
-      items.forEach(li => {
-        const tr = document.createElement('tr');
-        const td = document.createElement('td');
-        td.textContent = li.textContent;
-        tr.appendChild(td);
-        tbl.appendChild(tr);
-        tbc.appendChild(tr.cloneNode(true));
-      });
+        const table = document.getElementById('invoice-table');
+        table.innerHTML = '';
+        document.querySelectorAll('#breakdown li').forEach(li => {
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          td.textContent = li.textContent;
+          tr.appendChild(td);
+          table.appendChild(tr);
+        });
+        // コピー用も同じ
+        document.getElementById('invoice-table-copy').innerHTML = table.innerHTML;
 
-      html2pdf().from(inv).set({
-        margin: 0.5,
-        filename: '福祉タクシー請求書.pdf',
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'a4' }
-      }).save().then(() => {
-        inv.style.display = 'none';
+        // 3) 少し待ってから PDF 化（DOM の再描画を待機）
+        setTimeout(() => {
+          const opt = {
+            margin: 0.5,
+            filename: '福祉タクシー請求書.pdf',
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+          };
+          html2pdf().set(opt).from(invoice).save()
+            .then(() => {
+              // 非表示に戻す
+              invoice.style.display = 'none';
+            })
+            .catch(err => {
+              console.error('PDF生成エラー:', err);
+              alert('PDF生成中にエラーが発生しました');
+              invoice.style.display = 'none';
+            });
+        }, 500);
       });
     }
   </script>
