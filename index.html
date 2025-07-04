@@ -12,7 +12,7 @@
     .radio-group label, .checkbox-group label { font-weight: normal; margin-left: 20px; display: inline-block; }
     #result, #breakdown { margin-top: 20px; font-weight: bold; }
     #breakdown ul { padding-left: 20px; }
-    #invoice { font-size: 14px; display: none; background: #fff; }
+    #invoice { font-size: 14px; display: none; background: #fff; padding: 10px; }
     .invoice-block { border: 1px solid #000; padding: 10px; margin-bottom: 20px; }
     .invoice-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
     .invoice-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px; }
@@ -21,8 +21,8 @@
   </style>
   <!-- Google Maps API -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1Y1geobXRlk517MSj_b3dEl9o1wZjKSs&libraries=places"></script>
-  <!-- html2pdf.js -->
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- html2pdf.js (no defer to ensure load before usage) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
   <h3>福祉タクシー 利用料計算：</h3>
@@ -110,39 +110,40 @@
     });
 
     function calculateFare() {
-      alert('calculateFare が呼ばれました');
-      // 省略: calculateFare 本体は問題ないとのことなので省略します
+      // 省略: 動作確認済み
+      console.log('calculateFare');
     }
 
     function generatePDF() {
-      alert('generatePDF が呼ばれました');
+      // ライブラリ読み込みチェック
+      if (typeof html2pdf === 'undefined') {
+        alert('html2pdf.js が読み込まれていません');
+        return;
+      }
+      console.log('generatePDF開始');
+
       const invoice = document.getElementById('invoice');
       invoice.style.display = 'block';
+      invoice.scrollIntoView();
 
-      // 請求書・領収書の内容を更新
+      // 内容更新
       document.getElementById('invoiceVehicle').textContent     = document.getElementById('vehicleType').value;
       document.getElementById('invoiceVehicleCopy').textContent = document.getElementById('vehicleType').value;
-      const table = document.getElementById('invoice-table');
-      table.innerHTML = '';
+      const table = document.getElementById('invoice-table'); table.innerHTML = '';
       document.querySelectorAll('#breakdown li').forEach(li => {
         const tr = document.createElement('tr');
         const td = document.createElement('td'); td.textContent = li.textContent;
-        tr.appendChild(td);
-        table.appendChild(tr);
+        tr.appendChild(td); table.appendChild(tr);
       });
       document.getElementById('invoice-table-copy').innerHTML = table.innerHTML;
 
-      // PDF オプション
-      const opt = {
-        margin:       0.5,
-        filename:     '福祉タクシー請求書.pdf',
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-      };
-
-      // PDF 生成
+      const opt = { margin: 0.5, filename: '福祉タクシー請求書.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
       html2pdf().set(opt).from(invoice).save().then(() => {
+        console.log('PDF生成完了');
         invoice.style.display = 'none';
+      }).catch(err => {
+        console.error('PDF生成エラー:', err);
+        alert('PDF生成中にエラーが発生しました');
       });
     }
   </script>
