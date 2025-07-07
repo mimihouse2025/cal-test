@@ -122,6 +122,12 @@
       const isNight = hour >= 22 || hour < 5;
       const vehicleType = document.getElementById('vehicleType').value;
 
+      // ご自身の車椅子使用時はワンボックス型必須
+      if (document.getElementById('useOwnWheelchair').checked && vehicleType !== '大型ワンボックス') {
+        alert('ご自身の車椅子を使用する場合は、ワンボックス型を選択してください。');
+        return;
+      }
+
       const nurse = parseInt(document.getElementById('nurseAssistants').value, 10) || 0;
       const helper = parseInt(document.getElementById('helperAssistants').value, 10) || 0;
       const assistTime = parseFloat(document.getElementById('assistantHours').value) || 0;
@@ -182,26 +188,4 @@
 
         document.getElementById('result').textContent = `合計運賃：¥${fare.toLocaleString()}（${isNight ? '深夜' : '通常'}）`;
         document.getElementById('details').textContent = `走行距離：${distanceKm.toFixed(2)} km`;
-        document.getElementById('breakdown').innerHTML = `<ul><li>出発地：${origin}</li><li>目的地：${destination}</li><li>車種：${vehicleType}</li>` + breakdown.map(i => `<li>${i}</li>`).join('') + `</ul>`;
-      });
-    }
-
-    function generatePDF() {
-      const breakdownEl = document.getElementById('breakdown');
-      if (!breakdownEl.innerHTML) { alert('先に計算してください'); return; }
-      const vehicleType = document.getElementById('vehicleType').value;
-      document.getElementById('invoiceVehicle').textContent = vehicleType;
-      document.getElementById('invoiceVehicleCopy').textContent = vehicleType;
-      const items = Array.from(breakdownEl.querySelectorAll('li')).map(li => `<tr><td>${li.textContent}</td></tr>`).join('');
-      const extra = `<tr><td><strong>合計運賃：</strong>${document.getElementById('result').textContent}</td></tr>` +
-                    `<tr><td><strong>走行距離：</strong>${distanceKmGlobal.toFixed(2)} km</td></tr>`;
-      const tableHTML = `<tr><th>明細</th></tr>${items}${extra}`;
-      document.getElementById('invoice-table').innerHTML = tableHTML;
-      document.getElementById('invoice-table-copy').innerHTML = tableHTML;
-      const inv = document.getElementById('invoice');
-      inv.style.display = 'block';
-      html2pdf().from(inv).set({ margin: 10, filename: '請求書.pdf', jsPDF: { unit: 'mm', format: 'a4' } }).save().then(() => inv.style.display = 'none');
-    }
-  </script>
-</body>
-</html>
+        document.getElementById('breakdown').innerHTML = `<ul><li>出発地：${origin}</li><li>目的地：${destination}</li><li>車種：${vehicleType}</li>` + breakdown.map(i => `
