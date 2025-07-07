@@ -8,8 +8,8 @@
     body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     input, select, button { width: 100%; padding: 8px; margin: 10px 0; box-sizing: border-box; }
     label { display: block; margin-top: 10px; font-weight: bold; }
-    .radio-group { margin-bottom: 15px; }
-    .radio-group label { font-weight: normal; margin-left: 20px; display: inline-block; }
+    .radio-group, .checkbox-group { margin-bottom: 15px; }
+    .radio-group label, .checkbox-group label { font-weight: normal; margin-left: 20px; display: inline-block; }
     #result, #details, #breakdown { margin-top: 20px; font-weight: bold; }
     #breakdown ul { padding-left: 20px; }
     #invoice { font-size: 14px; page-break-inside: avoid; }
@@ -56,6 +56,10 @@
     <label>階段昇降介助:</label><br>
     <label><input type="radio" name="stairsSupport" value="yes"> あり</label>
     <label><input type="radio" name="stairsSupport" value="no" checked> なし</label>
+  </div>
+  <!-- 追加: ご自身の車椅子使用チェックボックス -->
+  <div class="checkbox-group">
+    <label><input type="checkbox" id="useOwnWheelchair"> ご自身の車椅子を使用</label>
   </div>
   <div class="radio-group">
     <label>貸し出し車椅子（1台まで無料）:</label><br>
@@ -157,6 +161,10 @@
           fare += subFare;
           breakdown.push(`付添い：¥${subFare}`);
           breakdown.push(`付添い時間：${assistTime * 60}分`);
+        }
+
+        if (document.getElementById('useOwnWheelchair').checked) {
+          breakdown.push('ご自身の車椅子を使用');
         }
 
         if (document.querySelector('input[name="stairsSupport"]:checked').value === 'yes') {
