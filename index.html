@@ -122,8 +122,11 @@
       const isNight = hour >= 22 || hour < 5;
       const vehicleType = document.getElementById('vehicleType').value;
 
-      // ご自身の車椅子使用時はワンボックス型必須
-      if (document.getElementById('useOwnWheelchair').checked && vehicleType !== '大型ワンボックス') {
+      // 自身、貸し出し車椅子、ストレッチャー利用時はワンボックス型必須
+      const useOwn = document.getElementById('useOwnWheelchair').checked;
+      const loanWheelchair = document.querySelector('input[name="wheelchair"]:checked').value === 'yes';
+      const stretcherUse = document.querySelector('input[name="stretcher"]:checked').value === 'yes';
+      if ((useOwn || loanWheelchair || stretcherUse) && vehicleType !== '大型ワンボックス') {
         alert('車椅子をご利用の場合はワンボックス型をお選びください。');
         return;
       }
@@ -169,7 +172,7 @@
           breakdown.push(`付添い時間：${assistTime * 60}分`);
         }
 
-        if (document.getElementById('useOwnWheelchair').checked) {
+        if (useOwn) {
           breakdown.push('ご自身の車椅子を使用');
         }
 
@@ -179,10 +182,10 @@
           breakdown.push(`階段昇降介助：¥1600`);
         }
 
-        if (document.querySelector('input[name="stretcher"]:checked').value === 'yes') {
+        if (stretcherUse) {
           fare += 4000; breakdown.push('ストレッチャー：¥4000');
         }
-        if (document.querySelector('input[name="wheelchair"]:checked').value === 'yes') {
+        if (loanWheelchair) {
           breakdown.push('車椅子貸出：¥0');
         }
 
