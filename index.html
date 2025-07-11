@@ -202,6 +202,12 @@
       const useOwn = document.getElementById('useOwnWheelchair').checked;
       const loanWheelchair = document.querySelector('input[name="wheelchair"]:checked').value === 'yes';
       const stretcherUse = document.querySelector('input[name="stretcher"]:checked').value === 'yes';
+
+      if (useOwn && stretcherUse) {
+        alert('「ご自分の車椅子を使用」の場合はストレッチャー利用は「なし」を選択してください。');
+        return;
+      }
+
       if ((useOwn || loanWheelchair || stretcherUse) && vehicleType !== '大型ワンボックス') {
         alert('車椅子をご利用の場合はワンボックス型をお選びください。');
         return;
