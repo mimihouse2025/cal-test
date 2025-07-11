@@ -40,48 +40,39 @@
     #breakdown ul {
       padding-left: 20px;
     }
-
-    /* PDF出力用スタイル */
+    /* PDF用インボイス部分 */
     #invoice {
       display: none;
-      page-break-inside: avoid;
       font-family: inherit;
-      /* フォントサイズを少し小さく */
-      font-size: 12px;
     }
     .invoice-block {
       border: 1px solid #000;
       padding: 10px;
       margin-bottom: 20px;
       font-family: inherit;
+      /* 縮小に備え、幅を100%に */
+      width: 100%;
+    }
+    .invoice-title {
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 10px;
     }
     .invoice-header {
       display: flex;
       justify-content: space-between;
       margin-bottom: 10px;
-      font-family: inherit;
-    }
-    .invoice-title {
-      /* 見出しを少し小さめに */
-      font-size: 16px;
-      font-weight: bold;
-      text-align: center;
-      margin-bottom: 10px;
-      font-family: inherit;
     }
     .invoice-table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
-      font-family: inherit;
-      /* テーブル内文字サイズも調整 */
-      font-size: 12px;
     }
     .invoice-table th, .invoice-table td {
       border: 1px solid #000;
       padding: 2px;
       line-height: 1.2;
-      font-family: inherit;
     }
   </style>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1Y1geobXRlk517MSj_b3dEl9o1wZjKSs&libraries=places" defer></script>
@@ -270,7 +261,6 @@
           if (nurse > 0) types.push("看護師");
           if (helper > 0) types.push("ヘルパー");
           breakdown.push(`付添いスタッフ：${types.join("・")}`);
-
           breakdown.push(`付添い：¥${subFare}`);
           breakdown.push(`付添い時間：${assistTime * 60}分`);
         }
@@ -326,11 +316,16 @@
 
       const inv = document.getElementById('invoice');
       inv.style.display = 'block';
-      html2pdf()
-        .from(inv)
-        .set({ margin: 10, filename: '請求書.pdf', jsPDF: { unit: 'mm', format: 'a4' } })
-        .save()
-        .then(() => { inv.style.display = 'none'; });
+
+      html2pdf().set({
+        margin: 10,
+        filename: '請求書.pdf',
+        html2canvas: { scale: 0.7 },
+        jsPDF: { unit: 'mm', format: 'a4' }
+      })
+      .from(inv)
+      .save()
+      .then(() => { inv.style.display = 'none'; });
     }
   </script>
 </body>
